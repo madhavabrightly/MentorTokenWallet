@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MentorToken Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+</head>
+<body style="font-family: sans-serif;">
+  <h2>💼 MentorToken (MNT) Wallet</h2>
+  <button onclick="connectWallet()">🔌 Connect Wallet</button>
+  <p><b>Wallet:</b> <span id="walletAddress">Not connected</span></p>
+  <p><b>MNT Balance:</b> <span id="mntBalance">0</span></p>
+
+  <h3>🔁 Send MNT</h3>
+  <input id="toAddress" placeholder="Recipient address"><br><br>
+  <input id="amount" placeholder="Amount"><br><br>
+  <button onclick="sendToken()">🚀 Send MNT</button>
+
+  <script>
+    let provider, signer, contract;
+    const tokenAddress = "0x76b0D7f934C84b854bE87Bc53466E5988Cb6D9e6";
+    const tokenABI = [
+      "function balanceOf(address) view returns (uint)",
+      "function transfer(address to, uint amount) returns (bool)"
+    ];
+
+    async function connectWallet() {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      const address = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = address;
+      contract = new ethers.Contract(tokenAddress, tokenABI, signer);
+      const balance = await contract.balanceOf(address);
+      document.getElementById("mntBalance").innerText = ethers.utils.formatUnits(balance, 18);
+    }
+
+    async function sendToken() {
+      const to = document.getElementById("toAddress").value;
+      const amount = ethers.utils.parseUnits(document.getElementById("amount").value, 18);
+      const tx = await contract.transfer(to, amount);
+      await tx.wait();
+      alert("MNT sent successfully!");
+    }
+  </script>
+</body>
+</html>
