@@ -89,8 +89,9 @@
   </style>
 </head>
 <body>
-  <video autoplay loop muted class="bg-video">
-    <source src="./sketch.mp4" type="video/mp4">
+  <video autoplay muted playsinline class="bg-video" id="bgVideo">
+    <source src="./sketch.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
 
   <div class="container">
@@ -142,11 +143,27 @@
     async function sendToken() {
       const to = document.getElementById("toAddress").value;
       const amount = ethers.utils.parseUnits(document.getElementById("amount").value, 18);
-      const tx = await contract.transfer(to, amount);
-      await tx.wait();
-      alert("✅ MNT sent successfully!");
-      connectWallet();
+      try {
+        const tx = await contract.transfer(to, amount);
+        await tx.wait();
+        alert("✅ MNT sent successfully!");
+        connectWallet();
+      } catch (error) {
+        alert("❌ Transaction failed: " + error.message);
+      }
     }
+
+    // Seamless video loop tweak
+    const video = document.getElementById('bgVideo');
+    const rewindTime = 0.9; // seconds to rewind before loop
+
+    video.addEventListener('timeupdate', () => {
+      if (video.duration) {
+        if (video.currentTime > video.duration - rewindTime) {
+          video.currentTime = video.duration - rewindTime;
+        }
+      }
+    });
   </script>
 </body>
 </html>
