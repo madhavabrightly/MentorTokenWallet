@@ -1,19 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MentorToken Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      background: #0a0a0a;
+      position: relative;
+      overflow: hidden;
+    }
+    video.bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+      filter: grayscale(100%) contrast(1.2) brightness(0.7);
+    }
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00d8ff;
+    }
+    button {
+      background: #00d8ff;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    button:hover {
+      background: #00aacc;
+      transform: scale(1.03);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .info {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .label {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #d3d3d3;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 30px;
+      color: #aaa;
+    }
+    .refresh {
+      float: right;
+      margin-top: -28px;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body style="font-family: sans-serif;">
-  <h2>💼 MentorToken (MNT) Wallet</h2>
-  <button onclick="connectWallet()">🔌 Connect Wallet</button>
-  <p><b>Wallet:</b> <span id="walletAddress">Not connected</span></p>
-  <p><b>MNT Balance:</b> <span id="mntBalance">0</span></p>
+<body>
+  <video autoplay loop muted class="bg-video">
+    <source src="./sketch.mp4" type="video/mp4">
+  </video>
 
-  <h3>🔁 Send MNT</h3>
-  <input id="toAddress" placeholder="Recipient address"><br><br>
-  <input id="amount" placeholder="Amount"><br><br>
-  <button onclick="sendToken()">🚀 Send MNT</button>
+  <div class="container">
+    <h2>💼 MentorToken Wallet</h2>
+    <button onclick="connectWallet()">🔌 Connect Wallet</button>
+
+    <div class="info">
+      <div class="label">Wallet Address <span class="refresh" onclick="connectWallet()">🔄</span></div>
+      <div id="walletAddress">Not connected</div>
+
+      <div class="label">MNT Balance</div>
+      <div id="mntBalance">0</div>
+    </div>
+
+    <div>
+      <div class="label">Recipient Address</div>
+      <input id="toAddress" placeholder="0x..." />
+
+      <div class="label">Amount (MNT)</div>
+      <input id="amount" placeholder="Enter amount" />
+
+      <button onclick="sendToken()">🚀 Send MNT</button>
+    </div>
+  </div>
+
+  <footer>Built by Madhava · Powered by MetaMask & Ethers.js</footer>
 
   <script>
     let provider, signer, contract;
@@ -24,11 +127,13 @@
     ];
 
     async function connectWallet() {
+      if (!window.ethereum) return alert("Please install MetaMask.");
       provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
       const address = await signer.getAddress();
       document.getElementById("walletAddress").innerText = address;
+
       contract = new ethers.Contract(tokenAddress, tokenABI, signer);
       const balance = await contract.balanceOf(address);
       document.getElementById("mntBalance").innerText = ethers.utils.formatUnits(balance, 18);
@@ -39,7 +144,8 @@
       const amount = ethers.utils.parseUnits(document.getElementById("amount").value, 18);
       const tx = await contract.transfer(to, amount);
       await tx.wait();
-      alert("MNT sent successfully!");
+      alert("✅ MNT sent successfully!");
+      connectWallet();
     }
   </script>
 </body>
