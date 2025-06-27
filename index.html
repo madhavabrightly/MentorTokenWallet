@@ -3,61 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MentorToken Wallet</title>
+  <title>IAM Token Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f7fa;
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef2f5;
       margin: 0;
       padding: 0;
       color: #333;
     }
-    .overlay {
-      min-height: 100vh;
-      padding: 20px;
-    }
     .container {
       max-width: 500px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
+      margin: 40px auto;
+      background: white;
+      padding: 24px;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      position: relative;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     }
     h2 {
       text-align: center;
-      margin-bottom: 20px;
-      color: #1a73e8;
+      color: #2b6cb0;
     }
     button {
-      background: #1a73e8;
+      background: #2b6cb0;
       color: white;
       border: none;
       padding: 12px 18px;
       border-radius: 8px;
       font-size: 16px;
       cursor: pointer;
-      margin-top: 10px;
+      width: 100%;
     }
     button:hover {
-      background: #0f5bd3;
+      background: #1a4f8a;
     }
     input {
       width: 100%;
       padding: 10px;
-      margin-top: 8px;
-      margin-bottom: 16px;
+      margin: 6px 0 16px 0;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
     }
-    .info {
-      background: #eef3f9;
+    .info, .burn-section, .airdrop-section {
+      background: #f7fafc;
       padding: 15px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-top: 16px;
     }
     .label {
       font-weight: bold;
@@ -65,90 +58,84 @@
     }
     .qr {
       text-align: center;
-      margin-top: 10px;
+      margin-top: 15px;
     }
     footer {
       text-align: center;
       font-size: 12px;
-      margin-top: 30px;
       color: #777;
+      margin-top: 20px;
     }
     #aiTips {
-      background: #fff8e1;
-      color: #5f370e;
-      border-left: 4px solid #f6ad55;
-      padding: 10px;
+      background: #fff3cd;
+      padding: 12px;
+      border-left: 5px solid #ffeeba;
+      border-radius: 6px;
+      margin-top: 15px;
       font-size: 14px;
-      margin-top: 20px;
-      border-radius: 5px;
-    }
-    .burn-section {
-      background: #fcebea;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 25px;
-      border-left: 5px solid #f56565;
-    }
-    .burn-section h4 {
-      margin-bottom: 10px;
-      color: #c53030;
+      color: #856404;
     }
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <div class="container">
-      <h2>💼 MentorToken Wallet</h2>
-      <button onclick="connectWallet()">🔌 Connect Wallet</button>
+  <div class="container">
+    <h2>💼 IAM Token Wallet</h2>
+    <button onclick="connectWallet()">🔌 Connect Wallet</button>
 
-      <div class="info">
-        <div class="label">Wallet Address:</div>
-        <div id="walletAddress">Not connected</div>
+    <div class="info">
+      <div class="label">Wallet Address:</div>
+      <div id="walletAddress">Not connected</div>
 
-        <div class="label">MNT Balance:</div>
-        <div id="mntBalance">0</div>
+      <div class="label">IAM Balance:</div>
+      <div id="iamBalance">0</div>
 
-        <div class="label">Estimated Fee:</div>
-        <div id="gasEstimate">-</div>
-      </div>
-
-      <div>
-        <div class="label">Recipient Address</div>
-        <input id="toAddress" placeholder="0x..." />
-
-        <div class="label">Amount (MNT)</div>
-        <input id="amount" placeholder="Enter amount" />
-
-        <button onclick="sendToken()">🚀 Send MNT</button>
-      </div>
-
-      <div class="qr">
-        <img id="qrImage" src="" width="120" alt="QR Code" />
-      </div>
-
-      <div id="aiTips">
-        💡 <strong>AI Assistant:</strong> Double-check the recipient address before sending. Ensure you only send MNT to known or verified addresses. Estimated fees may vary based on congestion.
-      </div>
-
-      <div class="burn-section">
-        <h4>🔥 Burn Tokens</h4>
-        <input id="burnAmount" placeholder="Amount to burn" />
-        <button onclick="burnTokens()">Burn 🔥</button>
-      </div>
+      <div class="label">Estimated Gas Fee:</div>
+      <div id="gasEstimate">-</div>
     </div>
 
-    <footer>Built by Madhava · Powered by MetaMask, Ethers.js & QuickNode</footer>
+    <div class="label">Recipient Address</div>
+    <input id="toAddress" placeholder="0x..." />
+
+    <div class="label">Amount (IAM)</div>
+    <input id="amount" placeholder="Enter amount" />
+
+    <button onclick="sendToken()">🚀 Send IAM</button>
+
+    <div class="burn-section">
+      <div class="label">Burn IAM Tokens</div>
+      <input id="burnAmount" placeholder="Amount to burn" />
+      <button onclick="burnTokens()">🔥 Burn Tokens</button>
+    </div>
+
+    <div class="airdrop-section">
+      <div class="label">Airdrop (Owner Only)</div>
+      <input id="airdropAddresses" placeholder="Comma-separated addresses" />
+      <input id="airdropAmount" placeholder="Amount each" />
+      <button onclick="airdrop()">🎁 Airdrop IAM</button>
+    </div>
+
+    <div class="qr">
+      <img id="qrImage" src="" width="120" alt="QR Code" />
+    </div>
+
+    <div id="aiTips">
+      💡 <b>Tip:</b> Only send to valid wallet addresses. Burn is irreversible. Airdrop works only from contract owner wallet.
+    </div>
   </div>
+
+  <footer>Powered by MetaMask · Built with 💙 by Madhava</footer>
 
   <script>
     let provider, signer, contract;
-    const tokenAddress = "0x76b0D7f934C84b854bE87Bc53466E5988Cb6D9e6";
+    const tokenAddress = "0x9aa42e5D57b3c8e8A21A2284839639a17857C507";
     const tokenABI = [
       "function balanceOf(address) view returns (uint)",
+      "function decimals() view returns (uint8)",
       "function transfer(address to, uint amount) returns (bool)",
       "function burn(uint amount) returns (bool)",
-      "function symbol() view returns (string)",
-      "function decimals() view returns (uint8)"
+      "function airdrop(address[] calldata recipients, uint256 amountEach) external",
+      "function mint(address to, uint256 amount) external",
+      "function owner() view returns (address)"
     ];
 
     async function connectWallet() {
@@ -163,7 +150,7 @@
       contract = new ethers.Contract(tokenAddress, tokenABI, signer);
       const balance = await contract.balanceOf(address);
       const decimals = await contract.decimals();
-      document.getElementById("mntBalance").innerText = ethers.utils.formatUnits(balance, decimals);
+      document.getElementById("iamBalance").innerText = ethers.utils.formatUnits(balance, decimals);
     }
 
     async function sendToken() {
@@ -173,10 +160,9 @@
       const gasLimit = await contract.estimateGas.transfer(to, amount);
       const estFee = ethers.utils.formatEther(gasPrice.mul(gasLimit));
       document.getElementById("gasEstimate").innerText = `${estFee} ETH`;
-
       const tx = await contract.transfer(to, amount);
       await tx.wait();
-      alert("✅ MNT sent successfully!");
+      alert("✅ IAM sent successfully!");
       connectWallet();
     }
 
@@ -185,6 +171,15 @@
       const tx = await contract.burn(amount);
       await tx.wait();
       alert("🔥 Tokens burned successfully!");
+      connectWallet();
+    }
+
+    async function airdrop() {
+      const addrList = document.getElementById("airdropAddresses").value.split(',').map(a => a.trim());
+      const amountEach = ethers.utils.parseUnits(document.getElementById("airdropAmount").value, 18);
+      const tx = await contract.airdrop(addrList, amountEach);
+      await tx.wait();
+      alert("🎁 Airdrop completed!");
       connectWallet();
     }
   </script>
