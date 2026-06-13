@@ -3,267 +3,736 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IAM Token Wallet</title>
+  <title>IAM Token Wallet — Enterprise Dashboard</title>
+  
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  
   <style>
-    /* 1. Video Background Styling */
-    #bg-video {
-      position: fixed;
-      right: 0;
-      bottom: 0;
-      min-width: 100%;
-      min-height: 100%;
-      z-index: -1; 
-      object-fit: cover;
+    /* ----------------------------------------------------------------------
+       1. ROOT DESIGN TOKENS & SYSTEM VARIABLES
+    ---------------------------------------------------------------------- */
+    :root {
+      --primary-glow: #3182ce;
+      --primary-hover: #2b6cb0;
+      --accent-burn: #e53e3e;
+      --accent-burn-hover: #c53030;
+      --accent-airdrop: #319795;
+      --accent-airdrop-hover: #2c7a7b;
+      --glass-bg: rgba(10, 15, 30, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --inner-panel-bg: rgba(0, 0, 0, 0.4);
+      --text-main: #f7fafc;
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --error-glow: rgba(229, 62, 62, 0.2);
+      --success-glow: rgba(72, 187, 120, 0.2);
     }
 
+    /* ----------------------------------------------------------------------
+       2. CINEMATIC VIDEO BACKGROUND ENGINE
+    ---------------------------------------------------------------------- */
+    #bg-video {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      transform: translateX(-50%) translateY(-50%);
+      object-fit: cover;
+      background-color: #030712;
+      transition: opacity 1s ease-in-out;
+    }
+
+    /* ----------------------------------------------------------------------
+       3. BASE RESET & SCROLLBAR CONFIGURATION
+    ---------------------------------------------------------------------- */
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       margin: 0;
       padding: 0;
-      color: #ffffff; /* Switched base text to white for optimal contrast */
+      color: var(--text-main);
+      background-color: #030712;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
     }
 
-    /* 2. Enhanced Glassmorphism (High Transparency) */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ----------------------------------------------------------------------
+       4. ENTERPRISE GLASS CONTAINER & LAYOUT
+    ---------------------------------------------------------------------- */
+    .app-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      box-sizing: border-box;
+    }
+
     .container {
-      max-width: 500px;
-      margin: 40px auto;
-      /* Reduced opacity from 0.85 down to 0.35 to expose the video details */
-      background: rgba(255, 255, 255, 0.35); 
-      backdrop-filter: blur(12px); 
-      -webkit-backdrop-filter: blur(12px); 
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); 
-      border: 1px solid rgba(255, 255, 255, 0.25); 
+      width: 100%;
+      max-width: 540px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(25px) saturate(160%);
+      -webkit-backdrop-filter: blur(25px) saturate(160%);
+      padding: 32px;
+      border-radius: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--glass-border);
+      box-sizing: border-box;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
     }
 
+    .container:hover {
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    /* ----------------------------------------------------------------------
+       5. TYPOGRAPHY & HEADER ELEMENT STATES
+    ---------------------------------------------------------------------- */
     h2 {
       text-align: center;
       color: #ffffff;
       margin-top: 0;
-      font-size: 26px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    }
-
-    button {
-      background: #2b6cb0;
-      color: white;
-      border: none;
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      transition: background 0.2s ease, transform 0.1s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    button:hover {
-      background: #1a4f8a;
-      transform: translateY(-1px);
-    }
-
-    button:active {
-      transform: translateY(1px);
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 6px 0 16px 0;
-      /* Semi-transparent dark input styling so background slips through */
-      background: rgba(0, 0, 0, 0.4); 
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      font-size: 14px;
-      color: white;
-      box-sizing: border-box; 
-    }
-
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #2b6cb0;
-      background: rgba(0, 0, 0, 0.5);
-    }
-
-    /* Transparent inner dashboard sections */
-    .info, .burn-section, .airdrop-section {
-      background: rgba(0, 0, 0, 0.25); 
-      padding: 16px;
-      border-radius: 10px;
-      margin-top: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 28px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     .label {
       font-weight: 600;
-      margin-top: 10px;
-      font-size: 14px;
-      color: #e2e8f0;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      color: var(--text-muted);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
-    
-    #walletAddress, #iamBalance, #gasEstimate {
+
+    /* ----------------------------------------------------------------------
+       6. USER INTERFACE INTERACTION COMPONENT STYLING
+    ---------------------------------------------------------------------- */
+    button {
+      position: relative;
+      background: linear-gradient(135deg, var(--primary-glow), var(--primary-hover));
       color: #ffffff;
-      font-family: monospace;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 20px;
+      border-radius: 10px;
       font-size: 15px;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 6px 10px;
-      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 15px rgba(49, 130, 206, 0.3);
+      overflow: hidden;
+    }
+
+    button:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 8px 22px rgba(49, 130, 206, 0.45);
+      filter: brightness(1.1);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(49, 130, 206, 0.2);
+    }
+
+    button:disabled {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: rgba(255, 255, 255, 0.3) !important;
+      border-color: transparent !important;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Action Modifiers */
+    .btn-connect {
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      padding: 16px 20px;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+
+    .btn-burn {
+      background: linear-gradient(135deg, #fc8181, var(--accent-burn));
+      box-shadow: 0 4px 15px rgba(229, 62, 62, 0.25);
+    }
+    .btn-burn:hover {
+      box-shadow: 0 8px 22px rgba(229, 62, 62, 0.4);
+    }
+
+    .btn-airdrop {
+      background: linear-gradient(135deg, #4fd1c5, var(--accent-airdrop));
+      box-shadow: 0 4px 15px rgba(49, 151, 149, 0.25);
+    }
+    .btn-airdrop:hover {
+      box-shadow: 0 8px 22px rgba(49, 151, 149, 0.4);
+    }
+
+    /* Input Field Elements */
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 4px 0 14px 0;
+      background: var(--inner-panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ffffff;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary-glow);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
+    }
+
+    /* ----------------------------------------------------------------------
+       7. APPLICATION CONTAINMENT MODULES & VISUAL PANELS
+    ---------------------------------------------------------------------- */
+    .info-grid {
+      background: var(--inner-panel-bg);
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 10px;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .info-value {
+      color: #ffffff;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 15px;
+      font-weight: 600;
       margin-top: 4px;
       word-break: break-all;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
     }
 
-    .qr {
-      text-align: center;
-      margin-top: 15px;
+    .interactive-panel {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+      border-radius: 14px;
+      margin-top: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .qr img {
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ----------------------------------------------------------------------
+       8. NOTIFICATION SYSTEMS, RUNTIME LOGS, AND STATS
+    ---------------------------------------------------------------------- */
+    #txFeedbackLog {
+      display: none;
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      animation: panelSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .log-pending {
+      background: rgba(236, 201, 75, 0.15);
+      border: 1px solid rgba(236, 201, 75, 0.4);
+      color: #f6e05e;
+    }
+
+    .log-success {
+      background: var(--success-glow);
+      border: 1px solid rgba(72, 187, 120, 0.4);
+      color: #68d391;
+    }
+
+    .log-error {
+      background: var(--error-glow);
+      border: 1px solid rgba(229, 62, 62, 0.4);
+      color: #fc8181;
+    }
+
+    #aiTips {
+      background: rgba(254, 243, 199, 0.08);
+      border-left: 4px solid #d69e2e;
+      padding: 14px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      margin-top: 24px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #fef3c7;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
-    
+
+    .qr-wrapper {
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .qr-wrapper img {
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ----------------------------------------------------------------------
+       9. REUSABLE INFRASTRUCTURE ANIMATIONS
+    ---------------------------------------------------------------------- */
+    @keyframes panelSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     footer {
       text-align: center;
       font-size: 12px;
-      color: #ffffff; 
-      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8); 
-      margin-top: 20px;
-      padding-bottom: 20px;
-    }
-    
-    #aiTips {
-      background: rgba(254, 243, 199, 0.2); 
-      border-left: 5px solid #f59e0b;
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 15px;
-      font-size: 13px;
-      color: #fef3c7;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      color: rgba(255, 255, 255, 0.5);
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+      padding: 24px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(3, 7, 18, 0.8);
+      backdrop-filter: blur(10px);
     }
   </style>
 </head>
 <body>
 
   <video autoplay loop muted playsinline id="bg-video">
-    <source src="sketch.mp4" type="video/mp4">
+    <source src="https://raw.githubusercontent.com/madhavabrightly/MentorTokenWallet/main/sketch.mp4" type="video/mp4">
   </video>
 
-  <div class="container">
-    <h2>💼 IAM Token Wallet</h2>
-    <button onclick="connectWallet()">🔌 Connect Wallet</button>
+  <div class="app-viewport">
+    <div class="container">
+      <h2>💼 IAM Token Wallet</h2>
+      
+      <button id="btnConnect" class="btn-connect" onclick="WalletEngine.connect()">🔌 Connect Core Web3 Wallet</button>
 
-    <div class="info">
-      <div class="label">Wallet Address:</div>
-      <div id="walletAddress">Not connected</div>
+      <div id="txFeedbackLog"></div>
 
-      <div class="label">IAM Balance:</div>
-      <div id="iamBalance">0</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <div class="label">Identified Network:</div>
+          <div id="networkDisplay" class="info-value">Disconnected</div>
+        </div>
+        <div class="info-row">
+          <div class="label">Wallet Address Space:</div>
+          <div id="walletAddress" class="info-value">Not connected</div>
+        </div>
+        <div class="info-row">
+          <div class="label">Token Inventory Balance:</div>
+          <div id="iamBalance" class="info-value">0.0000 IAM</div>
+        </div>
+        <div class="info-row">
+          <div class="label">Dynamic Gas Fee Computation:</div>
+          <div id="gasEstimate" class="info-value">-</div>
+        </div>
+      </div>
 
-      <div class="label">Estimated Gas Fee:</div>
-      <div id="gasEstimate">-</div>
-    </div>
+      <div class="interactive-panel">
+        <div class="panel-title">🚀 Asset Disbursement Routing</div>
+        
+        <div class="label">Recipient Destination Address</div>
+        <input id="toAddress" placeholder="Enter hexadecimal destination address (0x...)" oninput="WalletEngine.calculateGas('transfer')" />
 
-    <div class="label">Recipient Address</div>
-    <input id="toAddress" placeholder="0x..." />
+        <div class="label">Transaction Allocation Volume (IAM)</div>
+        <input id="amount" type="number" step="any" placeholder="0.0" oninput="WalletEngine.calculateGas('transfer')" />
 
-    <div class="label">Amount (IAM)</div>
-    <input id="amount" placeholder="Enter amount" />
+        <button id="btnSend" onclick="WalletEngine.executeTransfer()">Broadcast IAM Transaction</button>
+      </div>
 
-    <button onclick="sendToken()">🚀 Send IAM</button>
+      <div class="interactive-panel">
+        <div class="panel-title">🔥 Token Supply Optimization</div>
+        <div class="label">Target Burning Volume (IAM)</div>
+        <input id="burnAmount" type="number" step="any" placeholder="0.0" oninput="WalletEngine.calculateGas('burn')" />
+        <button id="btnBurn" class="btn-burn" onclick="WalletEngine.executeBurn()">Commit Irreversible Burn</button>
+      </div>
 
-    <div class="burn-section">
-      <div class="label">Burn IAM Tokens</div>
-      <input id="burnAmount" placeholder="Amount to burn" />
-      <button onclick="burnTokens()">🔥 Burn Tokens</button>
-    </div>
+      <div class="interactive-panel">
+        <div class="panel-title">🎁 Batch Liquidity Allocation</div>
+        <div class="label">Array Mapping Target Space (Comma-separated)</div>
+        <input id="airdropAddresses" placeholder="0x123..., 0x456..., 0x789..." />
+        
+        <div class="label">Equitable Unit Mass Allocation Amount Each</div>
+        <input id="airdropAmount" type="number" step="any" placeholder="0.0" />
+        <button id="btnAirdrop" class="btn-airdrop" onclick="WalletEngine.executeAirdrop()">Initialize Distribution Protocol</button>
+      </div>
 
-    <div class="airdrop-section">
-      <div class="label">Airdrop (Owner Only)</div>
-      <input id="airdropAddresses" placeholder="Comma-separated addresses" />
-      <input id="airdropAmount" placeholder="Amount each" />
-      <button onclick="airdrop()">🎁 Airdrop IAM</button>
-    </div>
+      <div class="qr-wrapper" id="qrContainer">
+        <div class="label" style="margin-bottom: 10px;">Address Visual Verification Identifier</div>
+        <img id="qrImage" src="" width="130" alt="Address Verification Target" />
+      </div>
 
-    <div class="qr">
-      <img id="qrImage" src="" width="120" alt="QR Code" style="display:none;" />
-    </div>
-
-    <div id="aiTips">
-      💡 <b>Tip:</b> Only send to valid wallet addresses. Burn is irreversible. Airdrop works only from contract owner wallet.
+      <div id="aiTips">
+        ⚠️ <b>System Diagnostic Notice:</b> All dynamic blockchain state alterations executed via this structural window are completely binding. Ensure target verification indexes match accurately before execution loops.
+      </div>
     </div>
   </div>
 
-  <footer>Powered by MetaMask · Built with 💙 by Madhava</footer>
+  <footer>Powered by MetaMask Providers · Base Architecture Framework v4.2 · Engineer: Madhava</footer>
 
   <script>
-    let provider, signer, contract;
-    const tokenAddress = "0x9aa42e5D57b3c8e8A21A2284839639a17857C507";
-    const tokenABI = [
-      "function balanceOf(address) view returns (uint)",
-      "function decimals() view returns (uint8)",
-      "function transfer(address to, uint amount) returns (bool)",
-      "function burn(uint amount) returns (bool)",
-      "function airdrop(address[] calldata recipients, uint256 amountEach) external",
-      "function mint(address to, uint256 amount) external",
-      "function owner() view returns (address)"
-    ];
-
-    async function connectWallet() {
-      if (!window.ethereum) return alert("Please install MetaMask.");
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = provider.getSigner();
-      const address = await signer.getAddress();
-      document.getElementById("walletAddress").innerText = address;
+    /**
+     * @title Web3 Transaction Application Management Infrastructure
+     * @notice Handles dynamic memory allocation, pipeline parsing, gas computations, and contract executions.
+     */
+    const WalletEngine = (() => {
       
-      const qrImg = document.getElementById("qrImage");
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${address}&size=120x120`;
-      qrImg.style.display = "inline";
+      // Architectural Private Storage Registry
+      const state = {
+        provider: null,
+        signer: null,
+        contract: null,
+        userAddress: null,
+        tokenDecimals: 18,
+        contractConfig: {
+          address: "0x9aa42e5D57b3c8e8A21A2284839639a17857C507",
+          abi: [
+            "function balanceOf(address) view returns (uint)",
+            "function decimals() view returns (uint8)",
+            "function transfer(address to, uint amount) returns (bool)",
+            "function burn(uint amount) returns (bool)",
+            "function airdrop(address[] calldata recipients, uint256 amountEach) external",
+            "function owner() view returns (address)"
+          ]
+        }
+      };
 
-      contract = new ethers.Contract(tokenAddress, tokenABI, signer);
-      const balance = await contract.balanceOf(address);
-      const decimals = await contract.decimals();
-      document.getElementById("iamBalance").innerText = ethers.utils.formatUnits(balance, decimals);
-    }
+      /**
+       * @notice Evaluates and validates hex address syntax accuracy against EVM network expectations.
+       */
+      const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-    async function sendToken() {
-      const to = document.getElementById("toAddress").value;
-      const amount = ethers.utils.parseUnits(document.getElementById("amount").value, 18);
-      const gasPrice = await provider.getGasPrice();
-      const gasLimit = await contract.estimateGas.transfer(to, amount);
-      const estFee = ethers.utils.formatEther(gasPrice.mul(gasLimit));
-      document.getElementById("gasEstimate").innerText = `${estFee} ETH`;
-      const tx = await contract.transfer(to, amount);
-      await tx.wait();
-      alert("✅ IAM sent successfully!");
-      connectWallet();
-    }
+      /**
+       * @notice Outputs feedback parameters directly onto user interface panels.
+       */
+      const emitFeedback = (message, statusType = 'pending') => {
+        const logElement = document.getElementById("txFeedbackLog");
+        logElement.style.display = "block";
+        logElement.className = `log-${statusType}`;
+        logElement.innerHTML = message;
+      };
 
-    async function burnTokens() {
-      const amount = ethers.utils.parseUnits(document.getElementById("burnAmount").value, 18);
-      const tx = await contract.burn(amount);
-      await tx.wait();
-      alert("🔥 Tokens burned successfully!");
-      connectWallet();
-    }
+      /**
+       * @notice Restores elements and configuration constraints to their baseline state upon disconnect.
+       */
+      const clearFeedback = () => {
+        const logElement = document.getElementById("txFeedbackLog");
+        logElement.style.display = "none";
+        logElement.innerHTML = "";
+      };
 
-    async function airdrop() {
-      const addrList = document.getElementById("airdropAddresses").value.split(',').map(a => a.trim());
-      const amountEach = ethers.utils.parseUnits(document.getElementById("airdropAmount").value, 18);
-      const tx = await contract.airdrop(addrList, amountEach);
-      await tx.wait();
-      alert("🎁 Airdrop completed!");
-      connectWallet();
-    }
+      /**
+       * @notice Runs real-time validation checks across active execution threads.
+       */
+      const performSanityGuard = () => {
+        if (!state.signer || !state.contract) {
+          alert("Error: Critical Web3 Context Uninitialized. Authenticate wallet gateway first.");
+          return false;
+        }
+        return true;
+      };
+
+      return {
+        /**
+         * @notice Establishes connection logic, tracks node variations, and requests accounts.
+         */
+        connect: async () => {
+          try {
+            if (!window.ethereum) {
+              alert("Cryptographic provider engine absent. Please integrate MetaMask into workspace extensions.");
+              return;
+            }
+
+            document.getElementById("btnConnect").innerText = "Authorizing System Layers...";
+            
+            state.provider = new ethers.providers.Web3Provider(window.ethereum);
+            await state.provider.send("eth_requestAccounts", []);
+            
+            state.signer = state.provider.getSigner();
+            state.userAddress = await state.signer.getAddress();
+            
+            // Register target contract configuration
+            state.contract = new ethers.Contract(
+              state.contractConfig.address,
+              state.contractConfig.abi,
+              state.signer
+            );
+
+            // Fetch structural metadata variables from blockchain node
+            try {
+              state.tokenDecimals = await state.contract.decimals();
+            } catch (e) {
+              console.warn("Could not retrieve standard decimals configuration, fallback applied (18).", e);
+              state.tokenDecimals = 18;
+            }
+
+            // Sync visual system interface matrix configurations
+            const networkMetadata = await state.provider.getNetwork();
+            document.getElementById("networkDisplay").innerText = `${networkMetadata.name.toUpperCase()} (Chain ID: ${networkMetadata.chainId})`;
+            document.getElementById("walletAddress").innerText = state.userAddress;
+            
+            // Execute automated QR verification rendering pipelines
+            const qrWrapper = document.getElementById("qrContainer");
+            const qrImage = document.getElementById("qrImage");
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${state.userAddress}&size=130x130`;
+            qrWrapper.style.display = "block";
+
+            await WalletEngine.refreshAccountTelemetry();
+            
+            document.getElementById("btnConnect").innerText = "🔌 Refresh Context Layer";
+            emitFeedback("Web3 Security Matrix Established Successfully.", "success");
+
+            // Event-driven listener trees to capture network and account configuration swaps
+            window.ethereum.on('accountsChanged', () => window.location.reload());
+            window.ethereum.on('chainChanged', () => window.location.reload());
+
+          } catch (error) {
+            console.error("Cryptographic Initialization Subsystem Malfunction:", error);
+            document.getElementById("btnConnect").innerText = "🔌 Re-Initialize Connection";
+            emitFeedback(`Authentication Terminated: ${error.message}`, "error");
+          }
+        },
+
+        /**
+         * @notice Fetches balance values across the active blockchain memory architecture.
+         */
+        refreshAccountTelemetry: async () => {
+          if (!state.contract || !state.userAddress) return;
+          try {
+            const RawBalance = await state.contract.balanceOf(state.userAddress);
+            const FormattedBalance = ethers.utils.formatUnits(RawBalance, state.tokenDecimals);
+            document.getElementById("iamBalance").innerText = `${parseFloat(FormattedBalance).toFixed(4)} IAM`;
+          } catch (err) {
+            console.error("Error retrieving asset tracking telemetry maps:", err);
+          }
+        },
+
+        /**
+         * @notice Generates simulated estimates to calculate gas consumption requirements.
+         */
+        calculateGas: async (executionType) => {
+          if (!state.contract || !state.provider) return;
+          
+          const gasOutputField = document.getElementById("gasEstimate");
+          gasOutputField.innerText = "Computing metrics...";
+
+          try {
+            const currentGasPrice = await state.provider.getGasPrice();
+            let calculatedGasLimit;
+
+            if (executionType === 'transfer') {
+              const targetAddress = document.getElementById("toAddress").value;
+              const inputVolume = document.getElementById("amount").value;
+              
+              if (!isValidAddress(targetAddress) || !inputVolume || inputVolume <= 0) {
+                gasOutputField.innerText = "-";
+                return;
+              }
+              
+              const parsedVolume = ethers.utils.parseUnits(inputVolume.toString(), state.tokenDecimals);
+              calculatedGasLimit = await state.contract.estimateGas.transfer(targetAddress, parsedVolume);
+            } 
+            else if (executionType === 'burn') {
+              const inputVolume = document.getElementById("burnAmount").value;
+              if (!inputVolume || inputVolume <= 0) {
+                gasOutputField.innerText = "-";
+                return;
+              }
+              
+              const parsedVolume = ethers.utils.parseUnits(inputVolume.toString(), state.tokenDecimals);
+              calculatedGasLimit = await state.contract.estimateGas.burn(parsedVolume);
+            }
+
+            if (calculatedGasLimit) {
+              const totalOperationalFee = currentGasPrice.mul(calculatedGasLimit);
+              gasOutputField.innerText = `${ethers.utils.formatEther(totalOperationalFee).substring(0, 8)} ETH`;
+            }
+          } catch (error) {
+            console.warn("Gas matrix processing simulation skipped — Parameters incomplete or balance restricted.");
+            gasOutputField.innerText = "Simulation Layer Inconclusive";
+          }
+        },
+
+        /**
+         * @notice Routes assets to a specific destination node.
+         */
+        executeTransfer: async () => {
+          if (!performSanityGuard()) return;
+          clearFeedback();
+
+          const targetDestination = document.getElementById("toAddress").value.trim();
+          const targetVolumeInput = document.getElementById("amount").value;
+
+          if (!isValidAddress(targetDestination)) {
+            return emitFeedback("Operation Halt: Invalid hexadecimal hex format in target parameters.", "error");
+          }
+          if (!targetVolumeInput || targetVolumeInput <= 0) {
+            return emitFeedback("Operation Halt: Asset transaction allocation mass must exceed 0 units.", "error");
+          }
+
+          try {
+            emitFeedback("Constructing transaction cryptographic payload envelope...", "pending");
+            const parsedAllocation = ethers.utils.parseUnits(targetVolumeInput.toString(), state.tokenDecimals);
+            
+            const broadCastTx = await state.contract.transfer(targetDestination, parsedAllocation);
+            emitFeedback(`Transaction sent! Awaiting chain block mining processing loop... <br><small>Hash: ${broadCastTx.hash}</small>`, "pending");
+            
+            await broadCastTx.wait();
+            emitFeedback("✅ Ledger state verification finalized successfully. Allocation delivered.", "success");
+            
+            // Flush input fields
+            document.getElementById("toAddress").value = "";
+            document.getElementById("amount").value = "";
+            await WalletEngine.refreshAccountTelemetry();
+          } catch (error) {
+            console.error("Disbursement payload processing breakdown:", error);
+            emitFeedback(`Disbursement Failed: ${error.data?.message || error.message}`, "error");
+          }
+        },
+
+        /**
+         * @notice Burns tokens to permanently remove them from circulation.
+         */
+        executeBurn: async () => {
+          if (!performSanityGuard()) return;
+          clearFeedback();
+
+          const targetBurnVolume = document.getElementById("burnAmount").value;
+          if (!targetBurnVolume || targetBurnVolume <= 0) {
+            return emitFeedback("Supply optimization sequence abort: Allocation must be distinct from zero.", "error");
+          }
+
+          try {
+            emitFeedback("Broadcasting contract incineration parameter updates...", "pending");
+            const parsedIncinerationVolume = ethers.utils.parseUnits(targetBurnVolume.toString(), state.tokenDecimals);
+            
+            const executionTx = await state.contract.burn(parsedIncinerationVolume);
+            emitFeedback(`Deflation block sequence executing... <br><small>Hash: ${executionTx.hash}</small>`, "pending");
+            
+            await executionTx.wait();
+            emitFeedback("🔥 Supply permanently removed from systemic circulation arrays.", "success");
+            
+            document.getElementById("burnAmount").value = "";
+            await WalletEngine.refreshAccountTelemetry();
+          } catch (error) {
+            console.error("Deflation framework exception logged:", error);
+            emitFeedback(`Incineration Sequence Terminated: ${error.data?.message || error.message}`, "error");
+          }
+        },
+
+        /**
+         * @notice Distributes liquidity to multiple targets in a single transaction.
+         */
+        executeAirdrop: async () => {
+          if (!performSanityGuard()) return;
+          clearFeedback();
+
+          const batchRawInput = document.getElementById("airdropAddresses").value;
+          const individualMassInput = document.getElementById("airdropAmount").value;
+
+          if (!batchRawInput) {
+            return emitFeedback("Batch execution abort: Recipient allocation workspace fields are empty.", "error");
+          }
+          if (!individualMassInput || individualMassInput <= 0) {
+            return emitFeedback("Batch execution abort: Universal target metrics must be a positive integer.", "error");
+          }
+
+          // Parse and clean target addresses
+          const processedAddressArray = batchRawInput.split(',')
+                                                    .map(addr => addr.trim())
+                                                    .filter(addr => addr.length > 0);
+
+          // Verify every structural coordinate in the array mapping
+          for (let idx = 0; idx < processedAddressArray.length; idx++) {
+            if (!isValidAddress(processedAddressArray[idx])) {
+              return emitFeedback(`Batch Index Malfunction: Element location sequence position [${idx + 1}] (${processedAddressArray[idx]}) contains an invalid hex pattern layout.`, "error");
+            }
+          }
+
+          try {
+            emitFeedback(`Assembling operational arrays across ${processedAddressArray.length} targets...`, "pending");
+            const structuralMassPerNode = ethers.utils.parseUnits(individualMassInput.toString(), state.tokenDecimals);
+            
+            const dynamicAirdropTx = await state.contract.airdrop(processedAddressArray, structuralMassPerNode);
+            emitFeedback(`Distributing unified liquid payloads... <br><small>Hash: ${dynamicAirdropTx.hash}</small>`, "pending");
+            
+            await dynamicAirdropTx.wait();
+            emitFeedback(`🎁 Liquidity distribution complete for ${processedAddressArray.length} addresses.`, "success");
+            
+            document.getElementById("airdropAddresses").value = "";
+            document.getElementById("airdropAmount").value = "";
+            await WalletEngine.refreshAccountTelemetry();
+          } catch (error) {
+            console.error("Airdrop payload processing breakdown:", error);
+            emitFeedback(`Batch Process Rejected: This operation is restricted to the smart contract deployer/owner address.`, "error");
+          }
+        }
+      };
+    })();
   </script>
 </body>
 </html>
